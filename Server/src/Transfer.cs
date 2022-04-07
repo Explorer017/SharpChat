@@ -3,6 +3,7 @@ using System.Xml;
 using System.Xml.Serialization;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 
 
 namespace SharpChatServer{
@@ -38,14 +39,16 @@ namespace SharpChatServer{
         }
 
         public static Message recieveMessage(NetworkStream stream){
-            int length = stream.ReadByte();
-            byte[] bytes = StreamToByteArray(stream, length);
+            byte[] length = new byte[4];
+            stream.Read(length, 0, length.Length);
+            int lengthInt = BitConverter.ToInt32(length, 0);
+            byte[] bytes = StreamToByteArray(stream, lengthInt);
             return ByteArrayToMessage(bytes);
         }
-
         public static Message sendMessage(NetworkStream stream, Message message){
             byte[] bytes = MessageToByteArray(message);
-            stream.WriteByte((byte)bytes.Length);
+            //Console.WriteLine(BitConverter.ToString(bytes));
+            stream.Write(BitConverter.GetBytes(bytes.Length), 0, 4);
             stream.Write(bytes, 0, bytes.Length);
             return message;
         }

@@ -22,7 +22,12 @@ namespace SharpChatServer{
             while (true){
                 if (listener.Pending()){
                     TcpClient client = listener.AcceptTcpClient();
-                    Log(Logger.Info, "Client connected!");
+                    Message message = Transfer.recieveMessage(client.GetStream());
+                    if (message.type == MessageType.Ping){
+                        Log(Logger.Info, $"Client {client.Client.RemoteEndPoint} sent a ping!");
+                        Transfer.sendMessage(client.GetStream(), new Message(MessageType.PingResponse, config.name, config.motd));
+                    } else {Log(Logger.Warning,"Client did not ping before connecting!");}
+                    
                     
                 }
             }
@@ -34,13 +39,13 @@ namespace SharpChatServer{
                     AnsiConsole.Markup($"[bold green][[Info]][/]");
                     break;
                 case Logger.Warning:
-                    AnsiConsole.Markup($"[bold yellow][[Warning]][/]");
+                    AnsiConsole.Markup($"[bold yellow][[Warn]][/]");
                     break;
                 case Logger.Error:
                     AnsiConsole.Markup($"[bold red][[Error]][/]");
                     break;
             }
-            AnsiConsole.Markup($":[bold white][[{DateTime.Now.ToString("dd-MM-yyyy hh:mm:ss")}]][/] ");
+            AnsiConsole.Markup($":[bold white][[{DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss")}]][/] ");
             AnsiConsole.Markup($"{message}\n");
         }
 

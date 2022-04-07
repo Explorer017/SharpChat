@@ -8,6 +8,7 @@ namespace SharpChatServer{
         public string version;
         public string ip;
         public int port;
+        public string motd;
         public string databaseUsername;
         public string databasePassword;
 
@@ -17,7 +18,7 @@ namespace SharpChatServer{
                 Server.Log(Logger.Warning, "Config file not found, creating new one!");
                 // create file
                 System.IO.File.Create(FileName).Close();
-                System.IO.File.WriteAllText(FileName,"Name=SharpChatServer\nVersion=2.0.1\nIP=127.0.0.1\nPort=12340\nDatabaseUsername=<USRNAME>\nDatabasePassword=<PASSWRD>\n");
+                System.IO.File.WriteAllText(FileName,"Name=SharpChatServer\nVersion=2.0.1\nMOTD=This is the Default MOTD.\nIP=127.0.0.1\nPort=12340\nDatabaseUsername=<USRNAME>\nDatabasePassword=<PASSWRD>\n");
             }
             // Read the config file
             string[] lines = System.IO.File.ReadAllLines(FileName);
@@ -50,6 +51,9 @@ namespace SharpChatServer{
                     case ConfigKey.DatabasePassword:
                         databasePassword = split[1];
                         break;
+                    case ConfigKey.MOTD:
+                        motd = split[1];
+                        break;
                 }
             }
             // check if all values are set
@@ -70,6 +74,7 @@ namespace SharpChatServer{
         IP,
         Port,
         DatabaseUsername,
-        DatabasePassword
+        DatabasePassword,
+        MOTD
     }
 }

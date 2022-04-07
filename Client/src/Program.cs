@@ -16,9 +16,15 @@ namespace SharpChatClient{
                 AnsiConsole.WriteException(e);
             }
             NetworkStream stream = client.GetStream();
-            Log(Logger.Info, $"Connected to server!");
-            Transfer.sendMessage(stream, new Message(MessageType.Connect,"Hello World!"));
-            Log(Logger.Info, $"Sent message!");
+            Transfer.sendMessage(stream, new Message(MessageType.Ping));
+            Message ping = Transfer.recieveMessage(stream);
+            if (ping.type == MessageType.PingResponse){
+                AnsiConsole.Markup($"[bold white]{ping.field1}[/]\n[white]{ping.field2}[/]\n");
+            }
+            else {
+                Log(Logger.Error, "Server did not send a valid ping response!");
+            }
+            Transfer.sendMessage(stream, new Message(MessageType.Connect, AnsiConsole.Ask<string>("Username: ")));
             while (true){
                 // press escape to exit
                 if (Console.ReadKey(true).Key == ConsoleKey.Escape){
@@ -44,7 +50,7 @@ namespace SharpChatClient{
                     AnsiConsole.Markup($"[bold red][[Error]][/]");
                     break;
             }
-            AnsiConsole.Markup($":[bold white][[{DateTime.Now.ToString("dd-MM-yyyy hh:mm:ss")}]][/] ");
+            AnsiConsole.Markup($":[bold white][[{DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss")}]][/] ");
             AnsiConsole.Markup($"{message}\n");
         }
     }
