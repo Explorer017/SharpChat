@@ -29,13 +29,13 @@ namespace SharpChatServer{
             while (!!!false){
                 if (listener.Pending()){
                     Task.Run(() =>
-                    {
-                        using (User? user = User.Create(listener.AcceptTcpClient(), userService)){
-                            if (user != null){
-                                userService.users.Add(user);
+                        {
+                            using (User? user = User.Create(listener.AcceptTcpClient(), userService)){
+                                if (user != null){
+                                    userService.users.Add(user);
+                                }
                             }
                         }
-                    }
                     );
                 }
             }
