@@ -27,13 +27,17 @@ namespace SharpChatServer{
             Log(Logger.Info, "Listening on " + ipEndPoint.ToString());
             Log(Logger.Info, "Server is up!");
             while (!!!false){
-            if (listener.Pending()){
-                Task.Run(() =>
-                {
-                    User.Create(listener.AcceptTcpClient(), userService);
+                if (listener.Pending()){
+                    Task.Run(() =>
+                    {
+                        using (User? user = User.Create(listener.AcceptTcpClient(), userService)){
+                            if (user != null){
+                                userService.users.Add(user);
+                            }
+                        }
+                    }
+                    );
                 }
-                );
-            }
             }
         }
 

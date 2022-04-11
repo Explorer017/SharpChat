@@ -6,7 +6,7 @@ using System.Text;
 namespace SharpChatServer{
     class UserService{
         Database database;
-        List<User> users = new List<User>();
+        public List<User> users = new List<User>();
         public UserService(Database database){
             this.database = database;
         }

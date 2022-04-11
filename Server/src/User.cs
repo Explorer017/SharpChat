@@ -5,7 +5,7 @@ using System.Net.Sockets;
 using Spectre.Console;
 
 namespace SharpChatServer{
-    class User{
+    class User : IDisposable{
         int id;
         string username = "NOT SET";
         RSA rsa;
@@ -59,7 +59,7 @@ namespace SharpChatServer{
                 clientRSA.ImportRSAPublicKey(message.field3, out _);
                 Transfer.sendMessageRSA(client.GetStream(), new Message(MessageType.Confirm, user.GetAES().Key, user.GetAES().IV, confirm), clientRSA);
                 if (confirm == 0) {client.Close(); return null;}
-                Server.Log(Logger.Info, Transfer.receiveMessageAES(client.GetStream(), user.GetAES()).type.ToString());
+                Transfer.receiveMessageAES(client.GetStream(), user.GetAES());
                 return user;
             }
             return null;
@@ -76,6 +76,11 @@ namespace SharpChatServer{
 
         public Aes GetAES(){
             return aes;
+        }
+
+        public void Dispose(){
+            rsa.Dispose();
+            aes.Dispose();
         }
 
         
