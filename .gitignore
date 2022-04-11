@@ -455,3 +455,4 @@ $RECYCLE.BIN/
 
 # SharpChat Config Files
 server.cfg
+*.db3

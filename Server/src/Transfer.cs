@@ -4,6 +4,7 @@ using System.Xml.Serialization;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Security.Cryptography;
 
 
 namespace SharpChatServer{
@@ -51,6 +52,39 @@ namespace SharpChatServer{
             stream.Write(BitConverter.GetBytes(bytes.Length), 0, 4);
             stream.Write(bytes, 0, bytes.Length);
             return message;
+        }
+
+        public static Message sendMessageRSA(NetworkStream stream, Message message, RSA rsa){
+            byte[] bytes = MessageToByteArray(message);
+            byte[] encrypted = rsa.Encrypt(bytes, RSAEncryptionPadding.Pkcs1);
+            stream.Write(BitConverter.GetBytes(encrypted.Length), 0, 4);
+            stream.Write(encrypted, 0, encrypted.Length);
+            return message;
+        }
+
+        public static Message receiveMessageRSA(NetworkStream stream, RSA rsa){
+            byte[] length = new byte[4];
+            stream.Read(length, 0, length.Length);
+            int lengthInt = BitConverter.ToInt32(length, 0);
+            byte[] bytes = StreamToByteArray(stream, lengthInt);
+            byte[] decrypted = rsa.Decrypt(bytes, RSAEncryptionPadding.Pkcs1);
+            return ByteArrayToMessage(decrypted);
+        }
+        public static Message sendMessageAES(NetworkStream stream, Message message, Aes aes){
+            byte[] bytes = MessageToByteArray(message);
+            byte[] encrypted = aes.CreateEncryptor().TransformFinalBlock(bytes, 0, bytes.Length);
+            stream.Write(BitConverter.GetBytes(encrypted.Length), 0, 4);
+            stream.Write(encrypted, 0, encrypted.Length);
+            return message;
+        }
+
+        public static Message receiveMessageAES(NetworkStream stream, Aes aes){
+            byte[] length = new byte[4];
+            stream.Read(length, 0, length.Length);
+            int lengthInt = BitConverter.ToInt32(length, 0);
+            byte[] bytes = StreamToByteArray(stream, lengthInt);
+            byte[] decrypted = aes.CreateDecryptor().TransformFinalBlock(bytes, 0, bytes.Length);
+            return ByteArrayToMessage(decrypted);
         }
     }
 }

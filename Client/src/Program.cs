@@ -2,9 +2,11 @@
 using Spectre.Console;
 using System.Net.Sockets;
 using System.Net;
+using System.Security.Cryptography;
 
 namespace SharpChatClient{
     class Program{
+
         static void Main(string[] args){
             AnsiConsole.Markup("[bold green]SharpChat Terminal Client[/]\n[bold yellow]Version: 2.0.1[/]\n");
             TcpClient client = new TcpClient();
@@ -15,16 +17,68 @@ namespace SharpChatClient{
                 Log(Logger.Error, e.Message);
                 AnsiConsole.WriteException(e);
             }
-            NetworkStream stream = client.GetStream();
-            Transfer.sendMessage(stream, new Message(MessageType.Ping));
-            Message ping = Transfer.recieveMessage(stream);
+            CryptographyService cryptographyService;
+            Transfer.sendMessage(client.GetStream(), new Message(MessageType.Ping));
+            Message ping = Transfer.recieveMessage(client.GetStream());
             if (ping.type == MessageType.PingResponse){
                 AnsiConsole.Markup($"[bold white]{ping.field1}[/]\n[white]{ping.field2}[/]\n");
             }
             else {
                 Log(Logger.Error, "Server did not send a valid ping response!");
             }
-            Transfer.sendMessage(stream, new Message(MessageType.Connect, AnsiConsole.Ask<string>("Username: ")));
+            NetworkStream stream = client.GetStream();
+            Transfer.sendMessage(stream, new Message(MessageType.Connect));
+            Message? rsaInfo = null;
+            cryptographyService = new CryptographyService();
+            string LogOrRegister = AnsiConsole.Prompt(new SelectionPrompt<string>()
+                                            .Title("[green]Login[/] or [yellow]Register[/]?")
+                                            .AddChoices(new[]{"Login", "Register"}));
+            string Username = AnsiConsole.Ask<string>("[white bold]Username:[/]");
+            string Password = cryptographyService.Hash(AnsiConsole.Prompt(new TextPrompt<string>("[red bold]Password:[/]").PromptStyle("red").Secret()));
+            AnsiConsole.Status().Start("Waiting for RSA key...", ctx =>
+                {
+                using (RSA rsa = RSA.Create()){
+                    // Recieve RSA key
+                    rsaInfo = Transfer.recieveMessage(stream);
+
+                    // Check if the message is the correct type
+                    if (rsaInfo.type == MessageType.Encrypt){
+                        // Import RSA key
+                        rsa.ImportRSAPublicKey(rsaInfo.field3, out _);
+                        // Store the RSA key
+                        cryptographyService.SetInboundRSA(rsa);
+                        ctx.Status("Sending credentials...");
+                        // Send credentials
+                        Transfer.sendMessageRSA(stream, new Message(MessageType.Authenticate,Username , Password, LogOrRegister == "Login" ? 1 : 0), rsa);
+                        // Send RSA key
+                        Transfer.sendMessageRSA(stream, new Message(MessageType.Encrypt, cryptographyService.GetOutboundRSA().ExportRSAPublicKey()), rsa);
+                        // Receive response
+                        ctx.Status("Receiving Session Key...");
+                        Message response = Transfer.receiveMessageRSA(stream, cryptographyService.GetOutboundRSA());
+                        if (response.type == MessageType.Confirm){
+                            if (response.field4 == 1){
+                                AnsiConsole.Markup("[green]Successfully logged in![/]\n");
+                                using (Aes aes = Aes.Create()){
+                                    aes.Key = response.field3;
+                                    Log(Logger.Info, $"Session key: {BitConverter.ToString(aes.Key)}".EscapeMarkup());
+                                    aes.IV = response.field5;
+                                    Log(Logger.Info, $"IV: {BitConverter.ToString(aes.IV)}".EscapeMarkup());
+                                    cryptographyService.SetAES(aes);
+                                    Transfer.sendMessageAES(stream, new Message(MessageType.Confirm), cryptographyService.GetAes());
+                                }
+                            }
+                            else {
+                                AnsiConsole.Markup("[red]Invalid username or password, or account already exists![/]\n");
+                            }
+                        }
+                        else {
+                            AnsiConsole.Markup("[red]Server did not send a valid response![/]\n");
+                        }
+                    }
+                }
+            });
+
+
             while (true){
                 // press escape to exit
                 if (Console.ReadKey(true).Key == ConsoleKey.Escape){

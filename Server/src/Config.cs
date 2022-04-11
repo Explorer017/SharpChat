@@ -9,8 +9,7 @@ namespace SharpChatServer{
         public string ip;
         public int port;
         public string motd;
-        public string databaseUsername;
-        public string databasePassword;
+        public string database;
 
         public Config(string FileName){
             // check if file exists
@@ -18,7 +17,7 @@ namespace SharpChatServer{
                 Server.Log(Logger.Warning, "Config file not found, creating new one!");
                 // create file
                 System.IO.File.Create(FileName).Close();
-                System.IO.File.WriteAllText(FileName,"Name=SharpChatServer\nVersion=2.0.1\nMOTD=This is the Default MOTD.\nIP=127.0.0.1\nPort=12340\nDatabaseUsername=<USRNAME>\nDatabasePassword=<PASSWRD>\n");
+                System.IO.File.WriteAllText(FileName,"Name=SharpChatServer\nVersion=2.0.1\nMOTD=This is the Default MOTD.\nIP=127.0.0.1\nPort=12340\nDatabase=Database.db3");
             }
             // Read the config file
             string[] lines = System.IO.File.ReadAllLines(FileName);
@@ -45,19 +44,16 @@ namespace SharpChatServer{
                     case ConfigKey.Port:
                         port = int.Parse(split[1]);
                         break;
-                    case ConfigKey.DatabaseUsername:
-                        databaseUsername = split[1];
-                        break;
-                    case ConfigKey.DatabasePassword:
-                        databasePassword = split[1];
-                        break;
                     case ConfigKey.MOTD:
                         motd = split[1];
+                        break;
+                    case ConfigKey.Database:
+                        database = split[1];
                         break;
                 }
             }
             // check if all values are set
-            if(name == null || version == null || ip == null || port == 0 || databaseUsername == null || databasePassword == null){
+            if(name == null || version == null || ip == null || port == 0 || motd == null){
                 throw new Exception("Config file is missing values!");
             }
             
@@ -75,6 +71,7 @@ namespace SharpChatServer{
         Port,
         DatabaseUsername,
         DatabasePassword,
-        MOTD
+        MOTD,
+        Database
     }
 }
