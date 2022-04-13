@@ -44,6 +44,7 @@ namespace SharpChatServer{
                             while (isRunning){
                                 try{
                                     message = Transfer.receiveMessageAES(user.GetClient().GetStream(), user.GetAES());
+                                    if(!user.VerifySessionToken(message)){throw new Exception("Session token is invalid!");}
                                 } catch(IOException e){
                                     Log(Logger.Warning, "User " + user.GetLoggableUsername() + " disconnected without sending a disconnect message!");
                                     //TODO: userService.RemoveUser(user);

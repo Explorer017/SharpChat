@@ -6,6 +6,7 @@ namespace SharpChatClient{
         RSA? InboundRSA;
         RSA OutboundRSA;
         Aes? aes;
+        byte[]? sessionToken;
 
         public CryptographyService(){
             this.OutboundRSA = RSA.Create();
@@ -18,6 +19,14 @@ namespace SharpChatClient{
 
         public void SetAES(Aes aes){
             this.aes = aes;
+        }
+
+        public void SetSessionToken(byte[] sessionToken){
+            this.sessionToken = sessionToken;
+        }
+
+        public byte[] GetSessionToken(){
+            return this.sessionToken ?? throw new NullReferenceException("Session token is null");
         }
 
         public Aes GetAes(){

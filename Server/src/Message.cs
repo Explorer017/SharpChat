@@ -9,6 +9,7 @@ namespace SharpChatServer
         public byte[]? field3;
         public int field4;
         public byte[]? field5;
+        public byte[]? SessionToken;
         public Message(MessageType type, byte[] field3){
             this.type = type;
             this.field3 = field3;
@@ -35,6 +36,11 @@ namespace SharpChatServer
             this.type = type;
             this.field1 = field1;
             this.field2 = "NO DATA";
+        }
+        public Message (MessageType type, string field1, byte[] sessionToken){
+            this.type = type;
+            this.field1 = field1;
+            this.SessionToken = sessionToken;
         }
         public Message(MessageType type, byte[] field3, byte[] field5, int field4){
             this.type = type;
@@ -63,6 +69,7 @@ namespace SharpChatServer
         PingResponse,
         Encrypt,
         Authenticate,
-        Confirm
+        Confirm,
+        SessionToken
     }
 }

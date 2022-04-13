@@ -66,6 +66,10 @@ namespace SharpChatClient{
                                 cryptographyService.SetAES(aes);
                                 //aes.Dispose();
                                 Transfer.sendMessageAES(stream, new Message(MessageType.Confirm), cryptographyService.GetAes());
+                                response = Transfer.receiveMessageAES(stream, cryptographyService.GetAes());
+                                if (response.type == MessageType.SessionToken){
+                                    cryptographyService.SetSessionToken(response.field3);
+                                }
                             }
                             else {
                                 AnsiConsole.Markup("[red]Invalid username or password, or account already exists![/]\n");
@@ -86,7 +90,7 @@ namespace SharpChatClient{
                     Log(Logger.Info, $"Disconnected from server!");
                     break;
                 }
-                Transfer.sendMessageAES(stream, new Message(MessageType.Message, AnsiConsole.Ask<string>(">")), cryptographyService.GetAes());
+                Transfer.sendMessageAES(stream, new Message(MessageType.Message, AnsiConsole.Ask<string>(">"), cryptographyService.GetSessionToken()), cryptographyService.GetAes());
             }
             
 

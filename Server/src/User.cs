@@ -11,6 +11,7 @@ namespace SharpChatServer{
         RSA rsa;
         Aes aes;
         TcpClient? client { get; set; }
+        byte[] sessionToken;
         public User(){
             // generate rsa
             rsa = RSA.Create();
@@ -19,6 +20,10 @@ namespace SharpChatServer{
             aes.KeySize = 256;
             aes.GenerateKey();
             aes.GenerateIV();
+            using (RandomNumberGenerator rng = RandomNumberGenerator.Create()){
+                sessionToken = new byte[32];
+                rng.GetBytes(sessionToken);
+            }
             
         }
 
@@ -62,6 +67,7 @@ namespace SharpChatServer{
                 Transfer.sendMessageRSA(client.GetStream(), new Message(MessageType.Confirm, user.GetAES().Key, user.GetAES().IV, confirm), clientRSA);
                 if (confirm == 0) {client.Close(); return null;}
                 Transfer.receiveMessageAES(client.GetStream(), user.GetAES());
+                Transfer.sendMessageAES(client.GetStream(), new Message(MessageType.SessionToken, user.GetSessionToken()), user.GetAES());
                 user.client = client;
                 return user;
             }
@@ -125,6 +131,17 @@ namespace SharpChatServer{
 
         public string GetLoggableUsername(){
             return $"{this.username}({this.client.Client.RemoteEndPoint})";
+        }
+
+        public byte[] GetSessionToken(){
+            return sessionToken;
+        }
+
+        public bool VerifySessionToken(Message message){
+            if (message.SessionToken == null){
+                return false;
+            }
+            return message.SessionToken.SequenceEqual(sessionToken);
         }
     }
 }
