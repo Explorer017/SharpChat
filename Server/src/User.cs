@@ -21,7 +21,7 @@ namespace SharpChatServer{
             aes.GenerateKey();
             aes.GenerateIV();
             using (RandomNumberGenerator rng = RandomNumberGenerator.Create()){
-                sessionToken = new byte[32];
+                sessionToken = new byte[128];
                 rng.GetBytes(sessionToken);
             }
             
