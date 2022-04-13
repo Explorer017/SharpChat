@@ -64,6 +64,7 @@ namespace SharpChatClient{
                                 aes.IV = response.field5;
                                 Log(Logger.Info, $"IV: {BitConverter.ToString(aes.IV)}".EscapeMarkup());
                                 cryptographyService.SetAES(aes);
+                                aes.Dispose();
                                 Transfer.sendMessageAES(stream, new Message(MessageType.Confirm), cryptographyService.GetAes());
                             }
                             else {
