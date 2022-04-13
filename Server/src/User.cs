@@ -10,6 +10,7 @@ namespace SharpChatServer{
         string username = "NOT SET";
         RSA rsa;
         Aes aes;
+        TcpClient? client { get; set; }
         public User(){
             // generate rsa
             rsa = RSA.Create();
@@ -60,6 +61,7 @@ namespace SharpChatServer{
                 Transfer.sendMessageRSA(client.GetStream(), new Message(MessageType.Confirm, user.GetAES().Key, user.GetAES().IV, confirm), clientRSA);
                 if (confirm == 0) {client.Close(); return null;}
                 Transfer.receiveMessageAES(client.GetStream(), user.GetAES());
+                user.client = client;
                 return user;
             }
             return null;
@@ -83,6 +85,37 @@ namespace SharpChatServer{
             aes.Dispose();
         }
 
+        public Message SendMessage(Message message){
+            if (client == null){
+                throw new Exception("Client is null");
+            }
+            return Transfer.sendMessageAES(client.GetStream(), message, aes);
+        }
+
+        public Message ReceiveMessage(){
+            if (client == null){
+                throw new Exception("Client is null");
+            }
+            return Transfer.receiveMessageAES(client.GetStream(), aes);
+        }
         
+        public void MessageReciever(){
+                Message message = ReceiveMessage();
+                if (message.type == MessageType.Disconnect){
+                    Server.Log(Logger.Info, $"Client {client.Client.RemoteEndPoint} disconnected");
+                    client.Close();
+                    client = null;
+                    return;
+                }
+                Server.Log(Logger.Info, $"Client {client.Client.RemoteEndPoint} sent a message");
+                Server.Log(Logger.Info, $"Message: {message.field1}");
+                Server.Log(Logger.Info, $"Message: {message.field2}");
+                Server.Log(Logger.Info, $"Message: {message.field3}");
+                Server.Log(Logger.Info, $"Message: {message.field4}");
+        }
+
+        public TcpClient GetClient(){
+            return client!;
+        }
     }
 }

@@ -53,5 +53,11 @@ namespace SharpChatServer{
             }
             return true;
         }
+
+        public bool AddUser(User? user){
+            if(user == null){return false;}
+            users.Add(user);
+            return true;
+        }
     }
 }

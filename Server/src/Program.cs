@@ -30,9 +30,24 @@ namespace SharpChatServer{
                 if (listener.Pending()){
                     Task.Run(() =>
                         {
-                            using (User? user = User.Create(listener.AcceptTcpClient(), userService)){
-                                if (user != null){
-                                    userService.users.Add(user);
+                            User? user = User.Create(listener.AcceptTcpClient(), userService);
+                            Message? message = null;
+                            if (user != null){
+                                userService.AddUser(user);
+                            }
+                            bool isRunning = true;
+                            while (isRunning){
+                                try{
+                                    message = user.ReceiveMessage();
+                                } catch (Exception e){
+                                    AnsiConsole.WriteException(e);
+                                    isRunning = false;
+                                }
+                                if (message.type == MessageType.Disconnect){
+                                    isRunning = false;
+                                }
+                                else if (message.type == MessageType.Message){
+                                    Log(Logger.Info, $"{user.GetClient().Client.RemoteEndPoint} sent a message: {message.field1}");
                                 }
                             }
                         }
