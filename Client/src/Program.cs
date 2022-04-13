@@ -58,14 +58,14 @@ namespace SharpChatClient{
                         if (response.type == MessageType.Confirm){
                             if (response.field4 == 1){
                                 AnsiConsole.Markup("[green]Successfully logged in![/]\n");
-                                using (Aes aes = Aes.Create()){
-                                    aes.Key = response.field3;
-                                    Log(Logger.Info, $"Session key: {BitConverter.ToString(aes.Key)}".EscapeMarkup());
-                                    aes.IV = response.field5;
-                                    Log(Logger.Info, $"IV: {BitConverter.ToString(aes.IV)}".EscapeMarkup());
-                                    cryptographyService.SetAES(aes);
-                                    Transfer.sendMessageAES(stream, new Message(MessageType.Confirm), cryptographyService.GetAes());
-                                }
+                                Aes aes = Aes.Create();
+                                aes.Key = response.field3;
+                                Log(Logger.Info, $"Session key: {BitConverter.ToString(aes.Key)}".EscapeMarkup());
+                                aes.IV = response.field5;
+                                Log(Logger.Info, $"IV: {BitConverter.ToString(aes.IV)}".EscapeMarkup());
+                                cryptographyService.SetAES(aes);
+                                aes.Dispose();
+                                Transfer.sendMessageAES(stream, new Message(MessageType.Confirm), cryptographyService.GetAes());
                             }
                             else {
                                 AnsiConsole.Markup("[red]Invalid username or password, or account already exists![/]\n");
@@ -82,7 +82,7 @@ namespace SharpChatClient{
             while (true){
                 // press escape to exit
                 if (Console.ReadKey(true).Key == ConsoleKey.Escape){
-                    Transfer.sendMessage(stream, new Message(MessageType.Disconnect, "Goodbye World!"));
+                    Transfer.sendMessageAES(stream, new Message(MessageType.Disconnect), cryptographyService.GetAes());
                     Log(Logger.Info, $"Disconnected from server!");
                     break;
                 }

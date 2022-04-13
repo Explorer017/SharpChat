@@ -38,7 +38,7 @@ namespace SharpChatServer{
                             bool isRunning = true;
                             while (isRunning){
                                 try{
-                                    message = user.ReceiveMessage();
+                                    message = Transfer.receiveMessageAES(user.GetClient().GetStream(), user.GetAES());
                                 } catch (Exception e){
                                     AnsiConsole.WriteException(e);
                                     isRunning = false;
