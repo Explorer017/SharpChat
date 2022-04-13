@@ -35,9 +35,10 @@ namespace SharpChatServer{
                             if (user != null){
                                 userService.AddUser(user);
                                 Log(Logger.Info, "User " + user.GetUsername() + " connected!");
-                            } else {
+                            } else if (user == null){
                                 Log(Logger.Error, "User could not be created!");
                                 // TODO: Handle this error
+                                throw new Exception("User could not be created!");
                             }
                             bool isRunning = true;
                             while (isRunning){
