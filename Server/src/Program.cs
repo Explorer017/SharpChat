@@ -34,16 +34,26 @@ namespace SharpChatServer{
                             Message? message = null;
                             if (user != null){
                                 userService.AddUser(user);
+                                Log(Logger.Info, "User " + user.GetUsername() + " connected!");
+                            } else {
+                                Log(Logger.Error, "User could not be created!");
+                                // TODO: Handle this error
                             }
                             bool isRunning = true;
                             while (isRunning){
                                 try{
                                     message = Transfer.receiveMessageAES(user.GetClient().GetStream(), user.GetAES());
+                                } catch(IOException e){
+                                    Log(Logger.Warning, "User " + user.GetUsername() + " disconnected without sending a disconnect message!");
+                                    //TODO: userService.RemoveUser(user);
+                                    isRunning = false;
                                 } catch (Exception e){
+                                    Log(Logger.Error, "An error occured while receiving a message!");
                                     AnsiConsole.WriteException(e);
                                     isRunning = false;
                                 }
                                 if (message.type == MessageType.Disconnect){
+                                    Log(Logger.Info, "User " + user.GetUsername() + " disconnected!");
                                     isRunning = false;
                                 }
                                 else if (message.type == MessageType.Message){

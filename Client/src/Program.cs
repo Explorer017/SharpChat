@@ -86,6 +86,7 @@ namespace SharpChatClient{
                     Log(Logger.Info, $"Disconnected from server!");
                     break;
                 }
+                Transfer.sendMessageAES(stream, new Message(MessageType.Message, AnsiConsole.Ask<string>(">")), cryptographyService.GetAes());
             }
             
 

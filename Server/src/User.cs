@@ -50,6 +50,7 @@ namespace SharpChatServer{
                     client.Close();
                     return null;
                 }
+                user.username = message.field1;
                 RSA clientRSA = RSA.Create();
                 message = Transfer.receiveMessageRSA(client.GetStream(), user.GetRSA());
                 if (message.type != MessageType.Encrypt){
@@ -116,6 +117,10 @@ namespace SharpChatServer{
 
         public TcpClient GetClient(){
             return client!;
+        }
+
+        public string GetUsername(){
+            return username;
         }
     }
 }
