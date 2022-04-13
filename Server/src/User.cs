@@ -122,5 +122,9 @@ namespace SharpChatServer{
         public string GetUsername(){
             return username;
         }
+
+        public string GetLoggableUsername(){
+            return $"{this.username}({this.client.Client.RemoteEndPoint})";
+        }
     }
 }

@@ -34,7 +34,7 @@ namespace SharpChatServer{
                             Message? message = null;
                             if (user != null){
                                 userService.AddUser(user);
-                                Log(Logger.Info, "User " + user.GetUsername() + " connected!");
+                                Log(Logger.Info, $"User {user.GetLoggableUsername()} connected!");
                             } else if (user == null){
                                 Log(Logger.Error, "User could not be created!");
                                 // TODO: Handle this error
@@ -45,7 +45,7 @@ namespace SharpChatServer{
                                 try{
                                     message = Transfer.receiveMessageAES(user.GetClient().GetStream(), user.GetAES());
                                 } catch(IOException e){
-                                    Log(Logger.Warning, "User " + user.GetUsername() + " disconnected without sending a disconnect message!");
+                                    Log(Logger.Warning, "User " + user.GetLoggableUsername() + " disconnected without sending a disconnect message!");
                                     //TODO: userService.RemoveUser(user);
                                     isRunning = false;
                                 } catch (Exception e){
@@ -54,11 +54,11 @@ namespace SharpChatServer{
                                     isRunning = false;
                                 }
                                 if (message.type == MessageType.Disconnect){
-                                    Log(Logger.Info, "User " + user.GetUsername() + " disconnected!");
+                                    Log(Logger.Info, "User " + user.GetLoggableUsername() + " disconnected!");
                                     isRunning = false;
                                 }
                                 else if (message.type == MessageType.Message){
-                                    Log(Logger.Info, $"{user.GetClient().Client.RemoteEndPoint} sent a message: {message.field1}");
+                                    Log(Logger.Info, $"{user.GetLoggableUsername()} sent a message: {message.field1}");
                                 }
                             }
                         }
