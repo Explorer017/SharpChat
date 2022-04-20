@@ -35,7 +35,6 @@ namespace SharpChatServer
         public Message(MessageType type, string field1){
             this.type = type;
             this.field1 = field1;
-            this.field2 = "NO DATA";
         }
         public Message (MessageType type, string field1, byte[] sessionToken){
             this.type = type;
@@ -50,8 +49,6 @@ namespace SharpChatServer
         }
         public Message(MessageType type){
             this.type = type;
-            this.field1 = "NO DATA";
-            this.field2 = "NO DATA";
         }
         public Message(){
             // Empty constructor for XML serialization
