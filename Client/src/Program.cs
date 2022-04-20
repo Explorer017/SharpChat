@@ -60,9 +60,7 @@ namespace SharpChatClient{
                                 AnsiConsole.Markup("[green]Successfully logged in![/]\n");
                                 Aes aes = Aes.Create();
                                 aes.Key = response.field3;
-                                Log(Logger.Info, $"Session key: {BitConverter.ToString(aes.Key)}".EscapeMarkup());
                                 aes.IV = response.field5;
-                                Log(Logger.Info, $"IV: {BitConverter.ToString(aes.IV)}".EscapeMarkup());
                                 cryptographyService.SetAES(aes);
                                 //aes.Dispose();
                                 Transfer.sendMessageAES(stream, new Message(MessageType.Confirm), cryptographyService.GetAes());
