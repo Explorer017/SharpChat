@@ -4,9 +4,8 @@ using System.Data.SQLite;
 namespace SharpChatServer{
     class Database{
 
-        //TODO: fix the "Non-nullable field" error (there is no way they can be null anyway so aaaaaaaaaaaa)
-        private static SQLiteConnection connection;
-        private static SQLiteCommand command;
+        private SQLiteConnection connection;
+        private SQLiteCommand command;
         public Database(string location){
 
             if (!System.IO.File.Exists("database.db3"))
