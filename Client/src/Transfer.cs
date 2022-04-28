@@ -29,7 +29,7 @@ namespace SharpChatClient{
         public static Message ByteArrayToMessage(byte[] bytes){
             XmlSerializer serializer = new XmlSerializer(typeof(Message));
             using(MemoryStream stream = new MemoryStream(bytes)){
-                return (Message)serializer.Deserialize(stream);
+                return (Message?)serializer.Deserialize(stream) ?? throw new Exception("Could not deserialize message.");
             }
         }
 

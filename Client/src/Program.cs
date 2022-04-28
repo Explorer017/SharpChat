@@ -59,14 +59,14 @@ namespace SharpChatClient{
                             if (response.field4 == 1){
                                 AnsiConsole.Markup("[green]Successfully logged in![/]\n");
                                 Aes aes = Aes.Create();
-                                aes.Key = response.field3;
-                                aes.IV = response.field5;
+                                aes.Key = response.field3 ?? throw new NullReferenceException("Session key is null!");
+                                aes.IV = response.field5 ?? throw new NullReferenceException("IV is null!");
                                 cryptographyService.SetAES(aes);
                                 //aes.Dispose();
                                 Transfer.sendMessageAES(stream, new Message(MessageType.Confirm), cryptographyService.GetAes());
                                 response = Transfer.receiveMessageAES(stream, cryptographyService.GetAes());
                                 if (response.type == MessageType.SessionToken){
-                                    cryptographyService.SetSessionToken(response.field3);
+                                    cryptographyService.SetSessionToken(response.field3 ?? throw new NullReferenceException("Session token cannot be null!"));
                                 }
                             }
                             else {
