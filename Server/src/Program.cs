@@ -10,7 +10,7 @@ using System.Collections.Generic;
 
 namespace SharpChatServer{
     class Server{
-        public static Config config;
+        public static Config? config;
         static void Main(string[] args){
             AnsiConsole.Markup("[bold green]SharpChat Server[/]\n[bold yellow]Version: 2.0.1[/]\n");
             config = new Config("server.cfg");
@@ -45,7 +45,7 @@ namespace SharpChatServer{
                                 try{
                                     message = Transfer.receiveMessageAES(user.GetClient().GetStream(), user.GetAES());
                                     if(!user.VerifySessionToken(message)){throw new Exception("Session token is invalid!");}
-                                } catch(IOException e){
+                                } catch(IOException){
                                     Log(Logger.Warning, "User " + user.GetLoggableUsername() + " disconnected without sending a disconnect message!");
                                     //TODO: userService.RemoveUser(user);
                                     isRunning = false;
@@ -53,6 +53,9 @@ namespace SharpChatServer{
                                     Log(Logger.Error, "An error occured while receiving a message!");
                                     AnsiConsole.WriteException(e);
                                     isRunning = false;
+                                }
+                                if (message == null){
+                                    throw new Exception("Message is null!");
                                 }
                                 if (message.type == MessageType.Disconnect){
                                     Log(Logger.Info, "User " + user.GetLoggableUsername() + " disconnected!");

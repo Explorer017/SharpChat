@@ -34,11 +34,11 @@ namespace SharpChatServer{
             return true;
         }
         public bool Login(string username, string password){
-            byte[] hash = database.getPasswordHash(username);
+            byte[]? hash = database.getPasswordHash(username);
             if(hash == null){
                 return false;
             }
-            byte[] salt = database.getSalt(username);
+            byte[]? salt = database.getSalt(username);
             if (salt == null){
                 return false;
             }

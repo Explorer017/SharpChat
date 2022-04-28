@@ -4,6 +4,7 @@ using System.Data.SQLite;
 namespace SharpChatServer{
     class Database{
 
+        //TODO: fix the "Non-nullable field" error (there is no way they can be null anyway so aaaaaaaaaaaa)
         private static SQLiteConnection connection;
         private static SQLiteCommand command;
         public Database(string location){
@@ -18,16 +19,16 @@ namespace SharpChatServer{
                 [SALT] VARCHAR(2048)  NULL,
                 [ITERATIONS] INTEGER  NULL
                 )";
-                connection = new SQLiteConnection("data source=" + location);
-                command = new SQLiteCommand(connection);
+                connection = new SQLiteConnection("data source=" + location) ?? throw new Exception("Could not create database!");
+                command = new SQLiteCommand(connection) ?? throw new Exception("Could not create command!");
                 connection.Open();
                 command.CommandText = createTableQuery;
                 command.ExecuteNonQuery();
                 connection.Close();
             }
             else{
-                connection = new SQLiteConnection("data source=" + location);
-                command = new SQLiteCommand(connection);
+                connection = new SQLiteConnection("data source=" + location) ?? throw new Exception("Could not connect to database!");
+                command = new SQLiteCommand(connection) ?? throw new Exception("Could not create command!");
             }
         }
         /// <summary>

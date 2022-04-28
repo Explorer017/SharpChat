@@ -32,12 +32,14 @@ namespace SharpChatServer{
             Message message = Transfer.recieveMessage(client.GetStream());
             if (message.type == MessageType.Ping){
                 Server.Log(Logger.Info, $"Client {client.Client.RemoteEndPoint} sent a ping!");
+                if (Server.config == null) {throw new Exception();}
                 Transfer.sendMessage(client.GetStream(), new Message(MessageType.PingResponse, Server.config.name, Server.config.motd));
                 message = Transfer.recieveMessage(client.GetStream());
             } if (message.type == MessageType.Connect){
                 User user = new User();
                 user.SendRSA(client);
                 message = Transfer.receiveMessageRSA(client.GetStream(), user.GetRSA());
+                if (message == null){ throw new Exception();}
                 if (message.type != MessageType.Authenticate){
                     Server.Log(Logger.Warning, $"Client {client.Client.RemoteEndPoint} sent an invalid authorisation message! Disconnecting");
                     client.Close();
@@ -45,10 +47,10 @@ namespace SharpChatServer{
                 }
                 int confirm = 0;
                 if (message.field4 == 0){
-                    if(userService.Register(message.field1, message.field2)){confirm = 1; }
+                    if(userService.Register(message.field1 ?? throw new Exception(), message.field2 ?? throw new Exception())){confirm = 1; }
                     else { confirm = 0; }
                 } else if (message.field4 == 1){
-                    if (userService.Login(message.field1, message.field2)){confirm = 1;}
+                    if (userService.Login(message.field1 ?? throw new Exception(), message.field2 ?? throw new Exception())){confirm = 1;}
                     else { confirm = 0; }
                 } else {
                     Server.Log(Logger.Warning, $"Client {client.Client.RemoteEndPoint} sent an invalid authorisation message! Disconnecting");
@@ -107,6 +109,9 @@ namespace SharpChatServer{
         }
         
         public void MessageReciever(){
+                if (client == null){
+                    throw new Exception("Client is null");
+                }
                 Message message = ReceiveMessage();
                 if (message.type == MessageType.Disconnect){
                     Server.Log(Logger.Info, $"Client {client.Client.RemoteEndPoint} disconnected");
@@ -130,6 +135,9 @@ namespace SharpChatServer{
         }
 
         public string GetLoggableUsername(){
+            if (client == null){
+                throw new Exception("Client is null");
+            }
             return $"{this.username}({this.client.Client.RemoteEndPoint})";
         }
 

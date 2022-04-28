@@ -53,7 +53,7 @@ namespace SharpChatServer{
                 }
             }
             // check if all values are set
-            if(name == null || version == null || ip == null || port == 0 || motd == null){
+            if(name == null || version == null || ip == null || port == 0 || motd == null || database == null){
                 throw new Exception("Config file is missing values!");
             }
             
