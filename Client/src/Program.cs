@@ -21,7 +21,7 @@ namespace SharpChatClient{
             Transfer.sendMessage(client.GetStream(), new Message(MessageType.Ping));
             Message ping = Transfer.recieveMessage(client.GetStream());
             if (ping.type == MessageType.PingResponse){
-                AnsiConsole.Markup($"[bold white]{ping.field1}[/]\n[white]{ping.field2}[/]\n");
+                AnsiConsole.Markup($"[bold white]{ping.field1}[/]\n[white]{ping.field2}[/]\n[green]Users Connected: [/][blue]{ping.field4}[/]\n");
             }
             else {
                 Log(Logger.Error, "Server did not send a valid ping response!");

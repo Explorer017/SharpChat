@@ -33,7 +33,7 @@ namespace SharpChatServer{
             if (message.type == MessageType.Ping){
                 Server.Log(Logger.Info, $"Client {client.Client.RemoteEndPoint} sent a ping!");
                 if (Server.config == null) {throw new Exception();}
-                Transfer.sendMessage(client.GetStream(), new Message(MessageType.PingResponse, Server.config.name, Server.config.motd));
+                Transfer.sendMessage(client.GetStream(), new Message(MessageType.PingResponse, Server.config.name, Server.config.motd, userService.users.Count));
                 message = Transfer.recieveMessage(client.GetStream());
             } if (message.type == MessageType.Connect){
                 User user = new User();
