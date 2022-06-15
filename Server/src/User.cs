@@ -61,9 +61,7 @@ namespace SharpChatServer{
                 Server.Log(Logger.Info, $"{client.Client.RemoteEndPoint} has {(confirm ? "successfully" : "failed")} authenticated");
                 user.username = authMessage.Username;
                 RSA clientRSA = RSA.Create();
-                Server.Log(Logger.Info, $"{client.Client.RemoteEndPoint} has authenticated as {authMessage.Username}, waiting for encryption...");
                 message = Transfer.receiveMessageRSA(client.GetStream(), user.GetRSA());
-                Server.Log(Logger.Info, $"{client.Client.RemoteEndPoint} has send encrypt message");
                 if (message.type != MessageType.Encrypt){
                     Server.Log(Logger.Warning, $"Client {client.Client.RemoteEndPoint} sent an invalid authorisation message! Disconnecting");
                     client.Close();
@@ -73,9 +71,7 @@ namespace SharpChatServer{
                 if (encryptMessage == null){ throw new Exception();}
                 clientRSA.ImportRSAPublicKey(encryptMessage.RSAPublicKey, out _);
                 if (confirm){
-                    Server.Log(Logger.Info, "sending aes bollocks");
                     Transfer.sendMessageRSA(client.GetStream(), new Message(MessageType.AuthConfirm, new AuthConfirmMessage(user.GetAES().Key, user.GetAES().IV)), clientRSA);
-                    Server.Log(Logger.Info, "aes bollocks sent");
                 } else {
                     Transfer.sendMessageRSA(client.GetStream(), new Message(MessageType.AuthDeny, new AuthDenyMessage("Your login details did not match any user on file, or the account you were trying to register already exists.")), clientRSA);
                 }

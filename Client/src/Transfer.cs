@@ -58,7 +58,6 @@ namespace SharpChatClient{
         public static Message sendMessageRSA(NetworkStream stream, Message message, RSA rsa){
             byte[] bytes = MessageToByteArray(message);
             byte[] encrypted = rsa.Encrypt(bytes, RSAEncryptionPadding.Pkcs1);
-            Console.WriteLine("Message Length: " + encrypted.Length);
             stream.Write(BitConverter.GetBytes(encrypted.Length), 0, 4);
             stream.Write(encrypted, 0, encrypted.Length);
             return message;
