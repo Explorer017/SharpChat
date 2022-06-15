@@ -4,7 +4,7 @@ using System.Xml.Serialization;
 namespace SharpChatServer
 {
     [Serializable]
-    [XmlInclude(typeof(PingMessage)), XmlInclude(typeof(PingResponseMessage)), XmlInclude(typeof(UserMessage)), XmlInclude(typeof(DisconnectMessage)), XmlInclude(typeof(ConnectMessage)), XmlInclude(typeof(EncryptMessage)), XmlInclude(typeof(EncryptionAcknowledgedMessage)), XmlInclude(typeof(AuthenticateMessage)), XmlInclude(typeof(AuthConfirmMessage)), XmlInclude(typeof(AuthDenyMessage)), XmlInclude(typeof(AesConfirmMessage))]
+    [XmlInclude(typeof(PingMessage)), XmlInclude(typeof(PingResponseMessage)), XmlInclude(typeof(UserMessage)), XmlInclude(typeof(DisconnectMessage)), XmlInclude(typeof(ConnectMessage)), XmlInclude(typeof(EncryptMessage)), XmlInclude(typeof(EncryptionAcknowledgedMessage)), XmlInclude(typeof(AuthenticateMessage)), XmlInclude(typeof(AuthConfirmMessage)), XmlInclude(typeof(AuthDenyMessage)), XmlInclude(typeof(ConfirmConnection))]
     public class Message{
         public MessageType type;
         public MessageContent? content;

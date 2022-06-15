@@ -24,16 +24,18 @@ namespace SharpChatServer{
             }
         }
 
-        public bool Register(string username, string password){
+        public bool Register(string username, byte[] passwordHash){
+            string passwordHashString = BitConverter.ToString(passwordHash);
             if(database.CheckIfNameExists(username) == true){
                 return false;
             }
             byte[] salt = GenerateSalt(32);
-            byte[] hash = GenerateHash(Encoding.UTF8.GetBytes(password), salt, 10000, 32);
+            byte[] hash = GenerateHash(Encoding.UTF8.GetBytes(passwordHashString), salt, 10000, 32);
             database.Store(username, hash, salt, 10000);
             return true;
         }
-        public bool Login(string username, string password){
+        public bool Login(string username, byte[] passwordHash){
+            string passwordHashString = BitConverter.ToString(passwordHash);
             byte[]? hash = database.getPasswordHash(username);
             if(hash == null){
                 return false;
@@ -42,7 +44,7 @@ namespace SharpChatServer{
             if (salt == null){
                 return false;
             }
-            byte[] hash2 = GenerateHash(Encoding.UTF8.GetBytes(password), salt, 10000, 32);
+            byte[] hash2 = GenerateHash(Encoding.UTF8.GetBytes(passwordHashString), salt, 10000, 32);
             if(hash.Length != hash2.Length){
                 return false;
             }

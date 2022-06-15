@@ -3,6 +3,7 @@ using Spectre.Console;
 using System.Net.Sockets;
 using System.Net;
 using System.Security.Cryptography;
+using System.Text;
 
 namespace SharpChatClient{
     class Program{
@@ -18,16 +19,20 @@ namespace SharpChatClient{
                 AnsiConsole.WriteException(e);
             }
             CryptographyService cryptographyService;
-            Transfer.sendMessage(client.GetStream(), new Message(MessageType.Ping));
+            Transfer.sendMessage(client.GetStream(), new Message(MessageType.Ping, new PingMessage()));
             Message ping = Transfer.recieveMessage(client.GetStream());
             if (ping.type == MessageType.PingResponse){
-                AnsiConsole.Markup($"[bold white]{ping.field1}[/]\n[white]{ping.field2}[/]\n[green]Users Connected: [/][blue]{ping.field4}[/]\n");
+                PingResponseMessage? pingResponse = (PingResponseMessage?)ping.content;
+                if (pingResponse == null){
+                    throw new Exception("PingResponseMessage is null!");
+                }
+                AnsiConsole.Markup($"[bold white]{pingResponse.ServerName}[/]\n[white]{pingResponse.ServerMOTD}[/]\n[green]Users Connected: [/][blue]{pingResponse.UsersOnline}[/]\n");
             }
             else {
                 Log(Logger.Error, "Server did not send a valid ping response!");
             }
             NetworkStream stream = client.GetStream();
-            Transfer.sendMessage(stream, new Message(MessageType.Connect));
+            Transfer.sendMessage(stream, new Message(MessageType.Connect, new ConnectMessage()));
             Message? rsaInfo = null;
             cryptographyService = new CryptographyService();
             string LogOrRegister = AnsiConsole.Prompt(new SelectionPrompt<string>()
@@ -43,35 +48,31 @@ namespace SharpChatClient{
 
                     // Check if the message is the correct type
                     if (rsaInfo.type == MessageType.Encrypt){
+                        if (rsaInfo.content == null) {throw(new Exception("RSA key is null!"));}
+                        EncryptMessage rsaMessage = (EncryptMessage)rsaInfo.content;
                         // Import RSA key
-                        rsa.ImportRSAPublicKey(rsaInfo.field3, out _);
+                        rsa.ImportRSAPublicKey(rsaMessage.RSAPublicKey, out _);
                         // Store the RSA key
                         cryptographyService.SetInboundRSA(rsa);
                         ctx.Status("Sending credentials...");
                         // Send credentials
-                        Transfer.sendMessageRSA(stream, new Message(MessageType.Authenticate,Username , Password, LogOrRegister == "Login" ? 1 : 0), rsa);
+                        // string to byte[]
+                        Transfer.sendMessageRSA(stream, new Message(MessageType.Authenticate, new AuthenticateMessage(Username , Encoding.UTF8.GetBytes(Password), LogOrRegister == "Login" ? false : true)), rsa);
                         // Send RSA key
-                        Transfer.sendMessageRSA(stream, new Message(MessageType.Encrypt, cryptographyService.GetOutboundRSA().ExportRSAPublicKey()), rsa);
+                        Transfer.sendMessageRSA(stream, new Message(MessageType.Encrypt, new EncryptMessage(cryptographyService.GetOutboundRSA().ExportRSAPublicKey())), rsa);
                         // Receive response
-                        ctx.Status("Receiving Session Key...");
                         Message response = Transfer.receiveMessageRSA(stream, cryptographyService.GetOutboundRSA());
-                        if (response.type == MessageType.Confirm){
-                            if (response.field4 == 1){
-                                AnsiConsole.Markup("[green]Successfully logged in![/]\n");
-                                Aes aes = Aes.Create();
-                                aes.Key = response.field3 ?? throw new NullReferenceException("Session key is null!");
-                                aes.IV = response.field5 ?? throw new NullReferenceException("IV is null!");
-                                cryptographyService.SetAES(aes);
-                                //aes.Dispose();
-                                Transfer.sendMessageAES(stream, new Message(MessageType.Confirm), cryptographyService.GetAes());
-                                response = Transfer.receiveMessageAES(stream, cryptographyService.GetAes());
-                                if (response.type == MessageType.SessionToken){
-                                    cryptographyService.SetSessionToken(response.field3 ?? throw new NullReferenceException("Session token cannot be null!"));
-                                }
-                            }
-                            else {
-                                AnsiConsole.Markup("[red]Invalid username or password, or account already exists![/]\n");
-                            }
+                        if (response.type == MessageType.AuthConfirm){
+                            if (response.content == null) {throw(new Exception("AuthConfirmMessage is null!"));}
+                            AuthConfirmMessage authConfirm = (AuthConfirmMessage)response.content;
+                            AnsiConsole.Markup("[green]Successfully logged in![/]\n");
+                            Aes aes = Aes.Create();
+                            aes.Key = authConfirm.AesKey ?? throw new NullReferenceException("Session key is null!");
+                            aes.IV = authConfirm.AesIV ?? throw new NullReferenceException("IV is null!");
+                            //cryptographyService.SetSessionToken(authConfirm.sessionToken ?? throw new NullReferenceException("Session token cannot be null!"));
+                            cryptographyService.SetAES(aes);
+                            //aes.Dispose();
+                            Transfer.sendMessageAES(stream, new Message(MessageType.ConfirmConnection, new ConfirmConnection()), cryptographyService.GetAes());
                         }
                         else {
                             AnsiConsole.Markup("[red]Server did not send a valid response![/]\n");
@@ -84,11 +85,11 @@ namespace SharpChatClient{
             while (true){
                 // press escape to exit
                 if (Console.ReadKey(true).Key == ConsoleKey.Escape){
-                    Transfer.sendMessageAES(stream, new Message(MessageType.Disconnect), cryptographyService.GetAes());
+                    Transfer.sendMessageAES(stream, new Message(MessageType.Disconnect, new DisconnectMessage()), cryptographyService.GetAes());
                     Log(Logger.Info, $"Disconnected from server!");
                     break;
                 }
-                Transfer.sendMessageAES(stream, new Message(MessageType.Message, AnsiConsole.Ask<string>(">"), cryptographyService.GetSessionToken()), cryptographyService.GetAes());
+                Transfer.sendMessageAES(stream, new Message(MessageType.Message, new UserMessage(AnsiConsole.Ask<string>(">"), cryptographyService.GetSessionToken())), cryptographyService.GetAes());
             }
             
 

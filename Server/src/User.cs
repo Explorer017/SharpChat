@@ -30,10 +30,12 @@ namespace SharpChatServer{
         public static User? Create(TcpClient client, UserService userService){
             // Receive Message
             Message message = Transfer.recieveMessage(client.GetStream());
+
             if (message.type == MessageType.Ping){
                 Server.Log(Logger.Info, $"Client {client.Client.RemoteEndPoint} sent a ping!");
-                if (Server.config == null) {throw new Exception();}
-                Transfer.sendMessage(client.GetStream(), new Message(MessageType.PingResponse, Server.config.name, Server.config.motd, userService.users.Count));
+                if (Server.config == null) {throw new NullReferenceException("Server Config file Error!");}
+
+                Transfer.sendMessage(client.GetStream(), new Message(MessageType.PingResponse, new PingResponseMessage(Server.config.name, Server.config.motd, userService.users.Count)));
                 message = Transfer.recieveMessage(client.GetStream());
             } if (message.type == MessageType.Connect){
                 User user = new User();
@@ -45,31 +47,50 @@ namespace SharpChatServer{
                     client.Close();
                     return null;
                 }
-                int confirm = 0;
-                if (message.field4 == 0){
-                    if(userService.Register(message.field1 ?? throw new Exception(), message.field2 ?? throw new Exception())){confirm = 1; }
-                    else { confirm = 0; }
-                } else if (message.field4 == 1){
-                    if (userService.Login(message.field1 ?? throw new Exception(), message.field2 ?? throw new Exception())){confirm = 1;}
-                    else { confirm = 0; }
+                Server.Log(Logger.Info, $"waiting for authentication from {client.Client.RemoteEndPoint}...");
+                AuthenticateMessage? authMessage = (AuthenticateMessage?)message.content;
+                bool confirm = false;
+                if (authMessage == null){ throw new Exception();}
+                if (authMessage.NewAccount == true){
+                    if(userService.Register(authMessage.Username ?? throw new Exception(), authMessage.HashedPassword ?? throw new Exception())){confirm = true; }
+                    else { confirm = false; }
                 } else {
-                    Server.Log(Logger.Warning, $"Client {client.Client.RemoteEndPoint} sent an invalid authorisation message! Disconnecting");
-                    client.Close();
-                    return null;
+                    if (userService.Login(authMessage.Username ?? throw new Exception(), authMessage.HashedPassword ?? throw new Exception())){confirm = true;}
+                    else { confirm = false; }
                 }
-                user.username = message.field1;
+                Server.Log(Logger.Info, $"{client.Client.RemoteEndPoint} has {(confirm ? "successfully" : "failed")} authenticated");
+                user.username = authMessage.Username;
                 RSA clientRSA = RSA.Create();
+                Server.Log(Logger.Info, $"{client.Client.RemoteEndPoint} has authenticated as {authMessage.Username}, waiting for encryption...");
                 message = Transfer.receiveMessageRSA(client.GetStream(), user.GetRSA());
+                Server.Log(Logger.Info, $"{client.Client.RemoteEndPoint} has send encrypt message");
                 if (message.type != MessageType.Encrypt){
                     Server.Log(Logger.Warning, $"Client {client.Client.RemoteEndPoint} sent an invalid authorisation message! Disconnecting");
                     client.Close();
                     return null;
                 }
-                clientRSA.ImportRSAPublicKey(message.field3, out _);
-                Transfer.sendMessageRSA(client.GetStream(), new Message(MessageType.Confirm, user.GetAES().Key, user.GetAES().IV, confirm), clientRSA);
-                if (confirm == 0) {client.Close(); return null;}
-                Transfer.receiveMessageAES(client.GetStream(), user.GetAES());
-                Transfer.sendMessageAES(client.GetStream(), new Message(MessageType.SessionToken, user.GetSessionToken()), user.GetAES());
+                EncryptMessage? encryptMessage = (EncryptMessage?)message.content;
+                if (encryptMessage == null){ throw new Exception();}
+                clientRSA.ImportRSAPublicKey(encryptMessage.RSAPublicKey, out _);
+                if (confirm){
+                    Server.Log(Logger.Info, "sending aes bollocks");
+                    Transfer.sendMessageRSA(client.GetStream(), new Message(MessageType.AuthConfirm, new AuthConfirmMessage(user.GetAES().Key, user.GetAES().IV)), clientRSA);
+                    Server.Log(Logger.Info, "aes bollocks sent");
+                } else {
+                    Transfer.sendMessageRSA(client.GetStream(), new Message(MessageType.AuthDeny, new AuthDenyMessage("Your login details did not match any user on file, or the account you were trying to register already exists.")), clientRSA);
+                }
+                Message ConfirmConnection = Transfer.receiveMessageAES(client.GetStream(), user.GetAES());
+                if (ConfirmConnection.type != MessageType.ConfirmConnection){
+                    Server.Log(Logger.Warning, $"Client {client.Client.RemoteEndPoint} sent an invalid authorisation message! Disconnecting");
+                    client.Close();
+                    return null;
+                }
+                if (ConfirmConnection.content == null) { throw new NullReferenceException();}/*
+                if (((ConfirmConnection)ConfirmConnection.content).sessionToken != user.GetSessionToken()){
+                    Server.Log(Logger.Warning, $"Client {client.Client.RemoteEndPoint} sent an invalid authorisation message! Disconnecting");
+                    client.Close();
+                    return null;
+                }*/
                 user.client = client;
                 return user;
             }
@@ -78,7 +99,7 @@ namespace SharpChatServer{
             
 
         public void SendRSA(TcpClient client){
-            Transfer.sendMessage(client.GetStream(), new Message(MessageType.Encrypt, rsa.ExportRSAPublicKey()));
+            Transfer.sendMessage(client.GetStream(), new Message(MessageType.Encrypt, new EncryptMessage(rsa.ExportRSAPublicKey())));
         }
 
         public RSA GetRSA(){
@@ -120,10 +141,10 @@ namespace SharpChatServer{
                     return;
                 }
                 Server.Log(Logger.Info, $"Client {client.Client.RemoteEndPoint} sent a message");
-                Server.Log(Logger.Info, $"Message: {message.field1}");
-                Server.Log(Logger.Info, $"Message: {message.field2}");
-                Server.Log(Logger.Info, $"Message: {message.field3}");
-                Server.Log(Logger.Info, $"Message: {message.field4}");
+                //Server.Log(Logger.Info, $"Message: {message.field1}");
+                //Server.Log(Logger.Info, $"Message: {message.field2}");
+                //Server.Log(Logger.Info, $"Message: {message.field3}");
+                //Server.Log(Logger.Info, $"Message: {message.field4}");
         }
 
         public TcpClient GetClient(){
@@ -145,11 +166,11 @@ namespace SharpChatServer{
             return sessionToken;
         }
 
-        public bool VerifySessionToken(Message message){
-            if (message.SessionToken == null){
+        public bool VerifySessionToken(UserMessage message){
+            if (message.sessionToken == null){
                 return false;
             }
-            return message.SessionToken.SequenceEqual(sessionToken);
+            return message.sessionToken.SequenceEqual(sessionToken);
         }
     }
 }

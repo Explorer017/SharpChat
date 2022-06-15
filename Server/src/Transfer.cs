@@ -56,7 +56,9 @@ namespace SharpChatServer{
 
         public static Message sendMessageRSA(NetworkStream stream, Message message, RSA rsa){
             byte[] bytes = MessageToByteArray(message);
+            Console.WriteLine(Encoding.UTF8.GetString(bytes));
             byte[] encrypted = rsa.Encrypt(bytes, RSAEncryptionPadding.Pkcs1);
+            Console.WriteLine(Encoding.UTF8.GetString(encrypted));
             stream.Write(BitConverter.GetBytes(encrypted.Length), 0, 4);
             stream.Write(encrypted, 0, encrypted.Length);
             return message;
@@ -82,8 +84,11 @@ namespace SharpChatServer{
             byte[] length = new byte[4];
             stream.Read(length, 0, length.Length);
             int lengthInt = BitConverter.ToInt32(length, 0);
+            Server.Log(Logger.Info, "Length: " + lengthInt);
             byte[] bytes = StreamToByteArray(stream, lengthInt);
+            Server.Log(Logger.Info, "Bytes: " + BitConverter.ToString(bytes));
             byte[] decrypted = aes.CreateDecryptor().TransformFinalBlock(bytes, 0, bytes.Length);
+            Server.Log(Logger.Info, "Decrypted message: " + Encoding.UTF8.GetString(decrypted));
             return ByteArrayToMessage(decrypted);
         }
     }

@@ -26,7 +26,7 @@ namespace SharpChatClient{
         }
 
         public byte[] GetSessionToken(){
-            return this.sessionToken ?? throw new NullReferenceException("Session token is null");
+            return this.sessionToken ;//?? throw new NullReferenceException("Session token is null");
         }
 
         public Aes GetAes(){

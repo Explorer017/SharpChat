@@ -44,7 +44,8 @@ namespace SharpChatServer{
                             while (isRunning){
                                 try{
                                     message = Transfer.receiveMessageAES(user.GetClient().GetStream(), user.GetAES());
-                                    if(!user.VerifySessionToken(message)){throw new Exception("Session token is invalid!");}
+                                    //TODO: Reimplement session tokens
+                                    //if (message.type == MessageType.Message){if(!user.VerifySessionToken((UserMessage)message.content)){throw new Exception("Session token is invalid!");}}
                                 } catch(IOException){
                                     Log(Logger.Warning, "User " + user.GetLoggableUsername() + " disconnected without sending a disconnect message!");
                                     //TODO: userService.RemoveUser(user);
@@ -62,7 +63,7 @@ namespace SharpChatServer{
                                     isRunning = false;
                                 }
                                 else if (message.type == MessageType.Message){
-                                    Log(Logger.Info, $"{user.GetLoggableUsername()} sent a message: {message.field1}");
+                                    Log(Logger.Info, $"{user.GetLoggableUsername()} sent a message: {((UserMessage)message.content).Message}");
                                 }
                             }
                         }
